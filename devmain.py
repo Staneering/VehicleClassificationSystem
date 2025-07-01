@@ -10,8 +10,8 @@ from skimage.feature import hog
 app = FastAPI()
 
 # Load SVM model and scaler (update path if needed)
-general_model = joblib.load("vehicle identification/model/vehicle_svm_model.pkl")
-hog_scaler = joblib.load("vehicle identification/model/hog_scaler.pkl")
+general_model = joblib.load("vehicle_svm_model.pkl")
+hog_scaler = joblib.load("hog_scaler.pkl")
 # Load brand classifier (Keras)
 brand_model = tf.keras.models.load_model("models/efficientnetb0_car_model.keras", compile=False)
 
@@ -28,6 +28,9 @@ def preprocess_image_for_cnn(contents):
     return img_array
 
 def preprocess_image_for_svm(contents):
+    '''
+    Preprocess the image for SVM model:
+    '''
     # Convert to grayscale and resize to 128x128
     image = Image.open(io.BytesIO(contents)).convert("L")
     image = image.resize((128, 128))
