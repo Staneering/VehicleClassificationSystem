@@ -10,6 +10,23 @@ from skimage.feature import hog
 
 app = FastAPI()
 
+@tf.keras.utils.register_keras_serializable()
+class SpatialAttention(layers.Layer):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        
+    def build(self, input_shape):
+        self.conv = layers.Conv2D(1, kernel_size=7, padding='same', activation='sigmoid')
+        super().build(input_shape)
+        
+    def call(self, x):
+        avg_pool = K.expand_dims(K.mean(x, axis=-1), axis=-1)
+        max_pool = K.expand_dims(K.max(x, axis=-1), axis=-1)
+        concat = K.concatenate([avg_pool, max_pool], axis=-1)
+        attention = self.conv(concat)
+        return layers.multiply([x, attention])
+
+
 # Load SVM model and scaler (update path if needed)
 general_model = joblib.load("vehicle_svm_model.pkl")
 hog_scaler = joblib.load("hog_scaler.pkl")
@@ -56,21 +73,6 @@ def preprocess_image_for_svm(contents):
     feats_scaled = hog_scaler.transform([feats])
     return feats_scaled
 
-@tf.keras.utils.register_keras_serializable()
-class SpatialAttention(layers.Layer):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        
-    def build(self, input_shape):
-        self.conv = layers.Conv2D(1, kernel_size=7, padding='same', activation='sigmoid')
-        super().build(input_shape)
-        
-    def call(self, x):
-        avg_pool = K.expand_dims(K.mean(x, axis=-1), axis=-1)
-        max_pool = K.expand_dims(K.max(x, axis=-1), axis=-1)
-        concat = K.concatenate([avg_pool, max_pool], axis=-1)
-        attention = self.conv(concat)
-        return layers.multiply([x, attention])
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
