@@ -13,7 +13,9 @@ app = FastAPI()
 general_model = joblib.load("vehicle_svm_model.pkl")
 hog_scaler = joblib.load("hog_scaler.pkl")
 # Load brand classifier (Keras)
-brand_model = tf.keras.models.load_model("models/efficientnetb0_car_model.keras", compile=False)
+brand_model = tf.keras.models.load_model("models/efficientnetv2s_car_model.keras", compile=False)
+# Define class names
+# General vehicle types for SVM
 
 general_classes = ["non vehicle", "three wheel", "motorcycle", "truck", "cars"]
 brand_classes = ["honda_accord", "peugeot", "toyota_camry", "toyota_corolla"]
