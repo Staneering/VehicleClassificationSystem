@@ -1,4 +1,7 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, Request, UploadFile, File
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 import tensorflow as tf
 from tensorflow.keras import layers, backend as K
 from PIL import Image
@@ -7,13 +10,18 @@ import io
 import joblib
 import cv2
 from skimage.feature import hog
+import base64
+from tensorflow.keras.models import load_model
+
 
 app = FastAPI()
 
+templates = Jinja2Templates(directory="templates")
+
 @tf.keras.utils.register_keras_serializable()
 class SpatialAttention(layers.Layer):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def _init_(self, **kwargs):
+        super()._init_(**kwargs)
         
     def build(self, input_shape):
         self.conv = layers.Conv2D(1, kernel_size=7, padding='same', activation='sigmoid')
@@ -25,6 +33,11 @@ class SpatialAttention(layers.Layer):
         concat = K.concatenate([avg_pool, max_pool], axis=-1)
         attention = self.conv(concat)
         return layers.multiply([x, attention])
+
+
+
+# Load filter model (vehicle vs non vehicle)
+filter_model = load_model("models/vehicle_filter_efficientnetv2.keras")  # Update filename as needed
 
 
 # Load SVM model and scaler (update path if needed)
@@ -42,9 +55,10 @@ brand_model = tf.keras.models.load_model(
 general_classes = ["non vehicle", "three wheel", "motorcycle", "truck", "cars"]
 brand_classes = ["honda_accord", "peugeot", "toyota_camry", "toyota_corolla"]
 
-IMG_SIZE = (224, 224)  # For CNN
+IMG_SIZE_filter = (224, 224)  # For CNN
+IMG_SIZE = (384, 384)  # For CNN, adjust as needed
 
-def preprocess_image_for_cnn(contents):
+def preprocess_image_for_cnn(contents, IMG_SIZE=IMG_SIZE):
     image = Image.open(io.BytesIO(contents)).convert("RGB")
     image = image.resize(IMG_SIZE)
     img_array = np.array(image) / 255.0
@@ -52,14 +66,9 @@ def preprocess_image_for_cnn(contents):
     return img_array
 
 def preprocess_image_for_svm(contents):
-    '''
-    Preprocess the image for SVM model:
-    '''
-    # Convert to grayscale and resize to 128x128
     image = Image.open(io.BytesIO(contents)).convert("L")
     image = image.resize((128, 128))
     img_array = np.array(image)
-    # Extract HOG features
     feats = hog(
         img_array,
         orientations=9,
@@ -69,22 +78,42 @@ def preprocess_image_for_svm(contents):
         transform_sqrt=True,
         feature_vector=True
     )
-    # Scale features
     feats_scaled = hog_scaler.transform([feats])
     return feats_scaled
+
+
+@app.get("/", response_class=HTMLResponse)
+async def read_root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     contents = await file.read()
 
-    # Stage 1: General vehicle type (SVM)
+
+    # Convert image to base64 for frontend display
+    image_base64 = base64.b64encode(contents).decode("utf-8")
+    image_data_url = f"data:{file.content_type};base64,{image_base64}"
+
+    # Stage 1: Vehicle vs Non Vehicle
+    filter_input = preprocess_image_for_cnn(contents,IMG_SIZE_filter) 
+    filter_label = filter_model.predict(filter_input)[0]
+    result = {"filter": filter_label}
+
+    if filter_label == "non vehicle":
+        return result
+#implement type confidence showing on index.html
+    # Stage 2: General vehicle type
     svm_input = preprocess_image_for_svm(contents)
     general_label = general_model.predict(svm_input)[0]
-    #general_label = general_classes[general_idx]
-    result = {"type": general_label}
+    confidence = max(general_model.decision_function(svm_input)[0])
+    result = {"type": general_label, "image": image_data_url, "type_confidence": confidence} 
 
-    # Stage 2: Brand classification if it's a car
+    #result = {"type": general_label, "image": image_data_url}
+    
+
+    # Stage 3: Brand classification if it's a car
     if general_label == "cars":
         cnn_input = preprocess_image_for_cnn(contents)
         brand_pred = brand_model.predict(cnn_input)[0]
@@ -92,5 +121,7 @@ async def predict(file: UploadFile = File(...)):
         brand_confidence = float(np.max(brand_pred))
         result["brand"] = brand_label
         result["brand_confidence"] = brand_confidence
-
+    else:
+        result["brand"] = "N/A"
+        result["brand_confidence"] = 0.0
     return result
