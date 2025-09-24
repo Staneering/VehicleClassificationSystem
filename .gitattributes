@@ -1,10 +1,7 @@
-*.keras filter=lfs diff=lfs merge=lfs -text
 *.pickle filter=lfs diff=lfs merge=lfs -text
-*.pkl filter=lfs diff=lfs merge=lfs -text
 *.h5 filter=lfs diff=lfs merge=lfs -text
 vehicle_svm_model.pkl filter=lfs diff=lfs merge=lfs -text
 hog_scaler.pkl filter=lfs diff=lfs merge=lfs -text
 models/vehicle_filter_efficientnetv2.keras filter=lfs diff=lfs merge=lfs -text
 efficientnetv2s_car_model.tflite filter=lfs diff=lfs merge=lfs -text
 vehicle_filter_efficientnetv2s_car_model.tflite filter=lfs diff=lfs merge=lfs -text
-*.tflite filter=lfs diff=lfs merge=lfs -text
