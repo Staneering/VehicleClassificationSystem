@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vehicle Classifier</title>
+</head>
+<body>
+  <h2>Upload a Vehicle Image</h2>
+  <input type="file" id="fileInput" />
+  <button onclick="upload()">Upload</button>
+
+  <h3>Prediction:</h3>
+  <p id="type"></p>
+  <p id="typeConfidence"></p>
+  <p id="brand"></p>
+  <p id="confidence"></p>
+  <img id="outputImage" style="max-width: 400px;" />
+
+  <script>
+    async function upload() {
+      const fileInput = document.getElementById("fileInput");
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      const response = await fetch("/predict", {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await response.json();
+      document.getElementById("type").innerText = `Type: ${data.type}`;
+      //document.getElementById("typeConfidence").innerText = `Type: ${data.type_confidence}`;
+      if (data.brand) {
+        document.getElementById("brand").innerText = `Brand: ${data.brand}`;
+        document.getElementById("confidence").innerText = `Confidence: ${data.brand_confidence}`;
+
+      }
+      document.getElementById("outputImage").src = data.image;
+    }
+  </script>
+</body>
+</html>

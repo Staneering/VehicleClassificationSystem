@@ -17,7 +17,7 @@ data/augmented/
 
 # Models (track only with LFS)
 models/*.keras
-vehicle identification/model/*.pkl
+
 
 # Logs
 *.log
