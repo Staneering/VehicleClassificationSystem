@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Car Model Detection</title>
+</head>
+<body>
+    <h2>Upload an Image for Classification</h2>
+    <input type="file" id="imageInput" accept="image/*">
+    <button onclick="uploadImage()">Classify</button>
+    <h3>Result:</h3>
+    <div id="result"></div>
+    <img id="uploadedImg" style="max-width:400px; display:none;" />
+
+    <script>
+    async function uploadImage() {
+        const input = document.getElementById('imageInput');
+        if (!input.files.length) {
+            alert('Please select an image.');
+            return;
+        }
+        const file = input.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('http://localhost:8000/predict', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        // Show results
+        let resultText = `Type: ${data.type}`;
+        if (data.brand) {
+            resultText += `<br>Brand: ${data.brand} (Confidence: ${data.brand_confidence})`;
+        }
+        document.getElementById('result').innerHTML = resultText;
+
+        // Show image
+        if (data.image) {
+            document.getElementById('uploadedImg').src = data.image;
+            document.getElementById('uploadedImg').style.display = 'block';
+        }
+    }
+    </script>
+</body>
+</html>
