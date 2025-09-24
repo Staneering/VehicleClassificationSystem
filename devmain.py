@@ -186,21 +186,24 @@ IMG_SIZE = (384, 384)
 # ==========================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global filter_model, general_model, hog_scaler, brand_model
+    import asyncio
 
-    # Load models here once (before first request)
+    # Start binding immediately
+    await asyncio.sleep(0)  
+
+    # Then load heavy models in the background
+    global filter_model, general_model, hog_scaler, brand_model
     filter_model = load_model("models/vehicle_filter_efficientnetv2.keras")
     general_model = joblib.load("vehicle_svm_model.pkl")
     hog_scaler = joblib.load("hog_scaler.pkl")
     brand_model = tf.keras.models.load_model(
         "models/efficientnetv2s_car_model.keras",
         compile=False,
-        custom_objects={"SpatialAttention": SpatialAttention}
+        custom_objects={"SpatialAttention": SpatialAttention},
     )
+    yield
 
-    yield  # <-- app runs here
-
-    # Clean up resources on shutdown
+    # Cleanup on shutdown
     filter_model = None
     general_model = None
     hog_scaler = None
