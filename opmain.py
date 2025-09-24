@@ -12,6 +12,13 @@ from skimage.feature import hog
 import base64
 
 
+import os
+
+print("Current working directory:", os.getcwd())
+print("Files in cwd:", os.listdir("."))
+print("Files in models folder:", os.listdir("models") if os.path.exists("models") else "No models dir")
+
+
 # ==========================
 # Custom Layer (still here if you ever load .keras)
 # ==========================
