@@ -144,6 +144,7 @@ import joblib
 from skimage.feature import hog
 import base64
 from tensorflow.keras.models import load_model
+import os
 
 
 # ==========================
@@ -193,11 +194,17 @@ async def lifespan(app: FastAPI):
 
     # Then load heavy models in the background
     global filter_model, general_model, hog_scaler, brand_model
-    filter_model = load_model("models/vehicle_filter_efficientnetv2.keras")
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    MODEL_PATH = os.path.join(BASE_DIR, "models", "vehicle_filter_efficientnetv2.keras")
+    
+    filter_model = load_model(MODEL_PATH)
+    #filter_model = load_model("models/vehicle_filter_efficientnetv2.keras")
     general_model = joblib.load("vehicle_svm_model.pkl")
     hog_scaler = joblib.load("hog_scaler.pkl")
+    BRAND_MODEL_PATH = os.path.join(BASE_DIR, "models", "efficientnetv2.keras")
+
     brand_model = tf.keras.models.load_model(
-        "models/efficientnetv2s_car_model.keras",
+        BRAND_MODEL_PATH,
         compile=False,
         custom_objects={"SpatialAttention": SpatialAttention},
     )
