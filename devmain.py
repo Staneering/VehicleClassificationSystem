@@ -40,7 +40,7 @@ app = FastAPI()
 
 
 
-"""# Load filter model (vehicle vs non vehicle)
+# Load filter model (vehicle vs non vehicle)
 filter_model = load_model("models/vehicle_filter_efficientnetv2.keras")  # Update filename as needed
 
 
@@ -52,7 +52,7 @@ brand_model = tf.keras.models.load_model(
     "models/efficientnetv2s_car_model.keras",
     compile=False,
     custom_objects={"SpatialAttention": SpatialAttention}
-)"""
+)
 # Define class names
 # General vehicle types for SVM
 
