@@ -75,7 +75,7 @@ async def lifespan(app: FastAPI):
         filename="vehicle_filter_efficientnetv2.tflite"
     )
     brand_model_path = hf_hub_download(
-        repo_id="Staneering/VehicleClassificationSystem",
+        repo_id="StanleyO/vehicle-models",
         filename="efficientnetv2s_car_model.tflite"
     )
     
