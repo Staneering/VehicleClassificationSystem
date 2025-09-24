@@ -78,7 +78,7 @@ async def lifespan(app: FastAPI):
         repo_id="Staneering/VehicleClassificationSystem",
         filename="efficientnetv2s_car_model.tflite"
     )
-
+    
     # --- Load TFLite models ---
     filter_interpreter = tf.lite.Interpreter(model_path=filter_model_path)
     filter_interpreter.allocate_tensors()
@@ -90,10 +90,19 @@ async def lifespan(app: FastAPI):
     brand_input_details = brand_interpreter.get_input_details()
     brand_output_details = brand_interpreter.get_output_details()
 
+    general_model_path = hf_hub_download(
+        repo_id="StanleyO/vehicle-models",
+        filename="vehicle_svm_model.pkl"
+    )
+    hog_scaler_path = hf_hub_download(
+        repo_id="StanleyO/vehicle-models",
+        filename="hog_scaler.pkl"
+    )
 
     # Load sklearn models
-    general_model = joblib.load("vehicle_svm_model.pkl")
-    hog_scaler = joblib.load("hog_scaler.pkl")
+    general_model = joblib.load(general_model_path)
+    hog_scaler = joblib.load(hog_scaler_path)
+
 
     yield  # <-- app runs here
 
