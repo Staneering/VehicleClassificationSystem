@@ -37,6 +37,10 @@ class SpatialAttention(layers.Layer):
 from fastapi import FastAPI
 
 app = FastAPI()
+<<<<<<< HEAD
+=======
+
+>>>>>>> 8930739ea1940a2eae285e0e370863ecff247a47
 
 
 
@@ -144,6 +148,10 @@ import joblib
 from skimage.feature import hog
 import base64
 from tensorflow.keras.models import load_model
+<<<<<<< HEAD
+=======
+import os
+>>>>>>> 8930739ea1940a2eae285e0e370863ecff247a47
 
 
 # ==========================
@@ -186,6 +194,7 @@ IMG_SIZE = (384, 384)
 # ==========================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+<<<<<<< HEAD
     global filter_model, general_model, hog_scaler, brand_model
 
     # Load models here once (before first request)
@@ -201,6 +210,32 @@ async def lifespan(app: FastAPI):
     yield  # <-- app runs here
 
     # Clean up resources on shutdown
+=======
+    import asyncio
+
+    # Start binding immediately
+    await asyncio.sleep(0)  
+
+    # Then load heavy models in the background
+    global filter_model, general_model, hog_scaler, brand_model
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    MODEL_PATH = os.path.join(BASE_DIR, "models", "vehicle_filter_efficientnetv2.keras")
+    
+    filter_model = load_model(MODEL_PATH)
+    #filter_model = load_model("models/vehicle_filter_efficientnetv2.keras")
+    general_model = joblib.load("vehicle_svm_model.pkl")
+    hog_scaler = joblib.load("hog_scaler.pkl")
+    BRAND_MODEL_PATH = os.path.join(BASE_DIR, "models", "efficientnetv2.keras")
+
+    brand_model = tf.keras.models.load_model(
+        BRAND_MODEL_PATH,
+        compile=False,
+        custom_objects={"SpatialAttention": SpatialAttention},
+    )
+    yield
+
+    # Cleanup on shutdown
+>>>>>>> 8930739ea1940a2eae285e0e370863ecff247a47
     filter_model = None
     general_model = None
     hog_scaler = None
@@ -290,3 +325,14 @@ async def predict(file: UploadFile = File(...)):
         result["brand_confidence"] = 0.0
 
     return result
+<<<<<<< HEAD
+=======
+
+if __name__ == "__main__":
+    import os
+    import uvicorn
+
+    port = int(os.environ.get("PORT", 8000))  # default to 8000 for local dev
+    uvicorn.run("devmain:app", host="0.0.0.0", port=port, reload=False)
+
+>>>>>>> 8930739ea1940a2eae285e0e370863ecff247a47
